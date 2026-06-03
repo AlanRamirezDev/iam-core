@@ -13,7 +13,7 @@ class CheckRole
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
         // 1. Verificamos si hay un usuario autenticado por el token JWT
         $user = $request->user();
@@ -22,8 +22,10 @@ class CheckRole
             return response()->json(['error' => 'No autenticado.'], 401);
         }
 
-        // 2. Verificamos si la colección de roles del usuario contiene el rol exigido
-        if (!$user->roles->contains('name', $role)) {
+        // 2. Comparamos la colección de roles del usuario contra los roles exigidos en la ruta
+        $hasAccess = $user->roles->whereIn('name', $roles)->isNotEmpty();
+
+        if (!$hasAccess) {
             return response()->json([
                 'error' => 'Acceso denegado. Privilegios insuficientes para esta acción.'
             ], 403);

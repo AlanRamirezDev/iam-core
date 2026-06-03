@@ -16,11 +16,8 @@ class AuditLog extends Model
         'payload' => 'array',
     ];
 
-    /**
-     * Relación inversa: el log pertenece a un usuario.
-     */
-    public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 }

@@ -16,13 +16,13 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// --- Rutas Operativas del Sistema ---
-Route::middleware(['auth:api', 'role:admin'])->group(function () {
-    // Bitácora de Auditoría
+// --- GRUPO 1: Auditoría ---
+Route::middleware(['auth:api', 'role:admin,auditor'])->group(function () {
     Route::get('audit-logs', [AuditLogController::class, 'index']);
-    // Gestión de Roles (Solo lectura)
-    Route::get('roles', [RoleController::class, 'index']);
-    // Gestión de Usuarios
-    Route::apiResource('users', UserController::class)->only(['index', 'store', 'destroy']);
+});
 
+// --- GRUPO 2: Gestión de Accesos ---
+Route::middleware(['auth:api', 'role:admin'])->group(function () {
+    Route::get('roles', [RoleController::class, 'index']);
+    Route::apiResource('users', UserController::class)->only(['index', 'store', 'destroy']);
 });
