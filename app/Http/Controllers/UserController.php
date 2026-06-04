@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -26,13 +28,16 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => [
+                'required', 
+                'string', 
+                'email', 
+                'max:255',
+                Rule::unique('users') 
+            ],
             'password' => [
                 'required', 
-                Password::min(8)
-                    ->mixedCase() // Debe contener al menos una mayúscula y una minúscula
-                    ->numbers()   // Debe contener al menos un número
-                    ->symbols()   // Debe contener al menos un carácter especial (@, $, !, etc.)
+                Password::min(8)->mixedCase()->numbers()->symbols() 
             ],
             'roles' => 'required|array'
         ], [
@@ -55,17 +60,42 @@ class UserController extends Controller
             $user->roles()->sync($roleIds);
         }
 
+        // REGISTRO: ALTA DE USUARIO
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'USER_CREATED',
+            'ip_address' => $request->ip(),
+            'payload' => [
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'assigned_roles' => $validated['roles'],
+                'user_agent' => $request->userAgent()
+            ]
+        ]);
+
         return response()->json($user->load('roles:id,name'), 201);
     }
 
     /**
-     * Eliminar un usuario del sistema.
+     * Eliminar un usuario del sistema (Soft Delete).
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         if ($user->id === auth()->id()) {
             return response()->json(['error' => 'No puedes eliminar tu propia cuenta de administrador.'], 403);
         }
+
+        // REGISTRO: BAJA DE USUARIO
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'USER_DELETED',
+            'ip_address' => $request->ip(),
+            'payload' => [
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'user_agent' => $request->userAgent()
+            ]
+        ]);
 
         $user->delete();
         return response()->json(null, 204);
