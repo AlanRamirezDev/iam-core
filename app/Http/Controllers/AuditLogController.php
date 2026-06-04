@@ -12,10 +12,10 @@ class AuditLogController extends Controller
      */
     public function index()
     {
+        // Obtenemos el historial completo
         $logs = AuditLog::with('user:id,name,email')
                         ->latest()
-                        ->paginate(15);
-
-        return response()->json($logs);
+                        ->get();
+        return response()->json(['data' => $logs]);
     }
 }

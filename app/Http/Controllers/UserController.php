@@ -27,9 +27,21 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => ['required', Password::min(8)],
-            'roles' => 'nullable|array',
-            'roles.*' => 'exists:roles,name'
+            'password' => [
+                'required', 
+                Password::min(8)
+                    ->mixedCase() // Debe contener al menos una mayúscula y una minúscula
+                    ->numbers()   // Debe contener al menos un número
+                    ->symbols()   // Debe contener al menos un carácter especial (@, $, !, etc.)
+            ],
+            'roles' => 'required|array'
+        ], [
+            // Manejo de errores
+            'email.unique' => 'Este correo ya pertenece a una cuenta en la plataforma. Comunícate con un administrador para reactivarla.',
+            'password.min' => 'La contraseña debe tener mínimo 8 caracteres.',
+            'password.mixed' => 'La contraseña debe incluir mayúsculas y minúsculas.',
+            'password.numbers' => 'La contraseña debe incluir al menos un número.',
+            'password.symbols' => 'La contraseña debe incluir al menos un símbolo (ej. @, $, !).'
         ]);
 
         $user = User::create([
