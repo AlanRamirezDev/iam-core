@@ -8,7 +8,8 @@ use App\Http\Controllers\RoleController;
 
 // --- Rutas de Autenticación ---
 Route::prefix('auth')->group(function () {
-    Route::post('login', [AuthController::class, 'login']);
+    // Limitador de peticiones (4 intentos, 1 minuto de bloqueo)
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:4,1');
 
     Route::middleware('auth:api')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
