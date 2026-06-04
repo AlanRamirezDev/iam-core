@@ -19,6 +19,14 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
+        $user = \App\Models\User::withTrashed()->where('email', $request->email)->first();
+
+        if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            if ($user->trashed()) {
+                return response()->json(['error' => 'Tu cuenta está inactiva. Contacta a un administrador.'], 403);
+            }
+        }
+
         if (! $token = Auth::guard('api')->attempt($credentials)) {
             return response()->json(['error' => 'No autorizado. Credenciales incorrectas.'], 401);
         }
@@ -33,7 +41,7 @@ class AuthController extends Controller
      */
     public function me()
     {
-        return response()->json(Auth::guard('api')->user());
+        return response()->json(Auth::guard('api')->user()->load('roles:id,name'));
     }
 
     /**
@@ -55,7 +63,7 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => Auth::guard('api')->factory()->getTTL() * 60,
-            'user' => Auth::guard('api')->user()
+            'user' => Auth::guard('api')->user()->load('roles:id,name')
         ]);
     }
 }

@@ -13,11 +13,11 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
-     * Listar usuarios paginados con sus roles.
+     * Listar usuarios (incluyendo inactivos) con sus roles.
      */
     public function index()
     {
-        $users = User::with('roles:id,name')->latest()->paginate(10);
+        $users = User::withTrashed()->with('roles:id,name')->latest()->paginate(10);
         return response()->json($users);
     }
 
@@ -42,7 +42,7 @@ class UserController extends Controller
             'roles' => 'required|array'
         ], [
             // Manejo de errores
-            'email.unique' => 'Este correo ya pertenece a una cuenta en la plataforma. Comunícate con un administrador para reactivarla.',
+            'email.unique' => 'Este correo ya pertenece a una cuenta en la plataforma.',
             'password.min' => 'La contraseña debe tener mínimo 8 caracteres.',
             'password.mixed' => 'La contraseña debe incluir mayúsculas y minúsculas.',
             'password.numbers' => 'La contraseña debe incluir al menos un número.',
@@ -84,7 +84,7 @@ class UserController extends Controller
         if ($user->id === auth()->id()) {
             return response()->json(['error' => 'No puedes eliminar tu propia cuenta de administrador.'], 403);
         }
-
+        
         // REGISTRO: BAJA DE USUARIO
         AuditLog::create([
             'user_id' => auth()->id(),
@@ -99,5 +99,32 @@ class UserController extends Controller
 
         $user->delete();
         return response()->json(null, 204);
+    }
+
+    /**
+     * Reactivar un usuario dado de baja.
+     */
+    public function restore(Request $request, $id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if (!$user->trashed()) {
+            return response()->json(['error' => 'El usuario ya se encuentra activo.'], 400);
+        }
+
+        $user->restore();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'USER_RESTORED',
+            'ip_address' => $request->ip(),
+            'payload' => [
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'user_agent' => $request->userAgent()
+            ]
+        ]);
+
+        return response()->json(['message' => 'Usuario reactivado exitosamente.', 'user' => $user->load('roles:id,name')]);
     }
 }

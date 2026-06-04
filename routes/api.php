@@ -22,7 +22,14 @@ Route::middleware(['auth:api', 'role:admin,auditor'])->group(function () {
 });
 
 // --- GRUPO 2: Gestión de Accesos ---
-Route::middleware(['auth:api', 'role:admin'])->group(function () {
+Route::middleware(['auth:api', 'role:admin,auditor,operator'])->group(function () {
     Route::get('roles', [RoleController::class, 'index']);
-    Route::apiResource('users', UserController::class)->only(['index', 'store', 'destroy']);
+    Route::get('users', [UserController::class, 'index']);
+});
+
+// --- GRUPO 3: Gestión de Accesos (Write) ---
+Route::middleware(['auth:api', 'role:admin'])->group(function () {
+    Route::post('users', [UserController::class, 'store']);
+    Route::delete('users/{user}', [UserController::class, 'destroy']);
+    Route::post('users/{id}/restore', [UserController::class, 'restore']);
 });
