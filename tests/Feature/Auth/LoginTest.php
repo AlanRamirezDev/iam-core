@@ -6,7 +6,7 @@ uses(Tests\TestCase::class, RefreshDatabase::class);
 
 test('El sistema bloquea la IP tras 4 intentos fallidos de login', function () {
     $payload = [
-        'email' => 'atacante@iam.local',
+        'email' => 'atacante@iam.test',
         'password' => 'clave_falsa_123'
     ];
 

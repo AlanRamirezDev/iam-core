@@ -14,7 +14,7 @@ class AuthorizationSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Crear los roles principales del sistema
+        // Crear los roles principales del sistema
         $adminRole = Role::firstOrCreate(
             ['name' => 'admin'],
             ['description' => 'Acceso total al sistema, gestión de usuarios y roles.']
@@ -30,16 +30,16 @@ class AuthorizationSeeder extends Seeder
             ['description' => 'Acceso operativo estándar para las funciones del negocio.']
         );
 
-        // 2. Crear un usuario Administrador de prueba
+        // Crear un usuario Administrador de prueba
         $adminUser = User::firstOrCreate(
-            ['email' => 'admin@iam.local'],
+            ['email' => 'admin@iam.test'],
             [
-                'name' => 'Alan Admin',
-                'password' => Hash::make('password123'),
+                'name' => 'Admin',
+                'password' => Hash::make('Ppassword123*'),
             ]
         );
 
-        // 3. Vincular el rol al usuario si no lo tiene asignado
+        // Vincular el rol al usuario si no lo tiene asignado
         if (!$adminUser->roles()->where('name', 'admin')->exists()) {
             $adminUser->roles()->attach($adminRole->id);
         }

@@ -12,10 +12,14 @@ class AuditLogController extends Controller
      */
     public function index()
     {
-        // Obtenemos el historial completo
-        $logs = AuditLog::with('user:id,name,email')
-                        ->latest()
-                        ->get();
-        return response()->json(['data' => $logs]);
+        // Solo traer un máximo de 50 registros
+        $logs = AuditLog::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'data' => $logs
+        ]);
     }
 }
