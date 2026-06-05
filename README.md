@@ -1,58 +1,69 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🛡️ IAM Core API - Identity & Access Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+¡Te doy la bienvenida al motor de autenticación y auditoría de mi portafolio!
 
-## About Laravel
+Este proyecto actúa como el backend centralizado para gestionar identidades y permisos. Está diseñado bajo una arquitectura REST estricta para demostrar mis capacidades en seguridad de APIs, control de accesos basado en roles (RBAC) y diseño de bases de datos relacionales en entornos modernos.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Características del Proyecto & Arquitectura Backend
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Seguridad JWT (JSON Web Tokens):** Implementación de autenticación sin estado (stateless) para asegurar las transacciones entre el cliente y el servidor.
+- **Control de Accesos Basado en Roles (RBAC):** Arquitectura de middlewares personalizados que interceptan y validan privilegios granulares (`admin`, `auditor`, `operador`) antes de la ejecución de controladores.
+- **Bitácora de Auditoría Inmutable:** Registro transaccional de eventos de seguridad. Utiliza campos JSON (`payload`) para almacenar metadatos históricos blindados contra eliminaciones en cascada.
+- **Protección de Datos Activa:** Implementación de "Soft Deletes" para bajas lógicas de usuarios, manteniendo la integridad referencial de la base de datos sin perder el historial.
+- **Testing Automatizado:** Cobertura de lógica de negocio y endpoints mediante **Pest**, garantizando flujos predecibles y a prueba de regresiones.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠️ Stack Tecnológico
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Tecnología | Versión | Propósito en el proyecto |
+| :--- | :--- | :--- |
+| **Laravel** | `^13.8` | Framework base, enrutamiento y ORM (Eloquent) |
+| **PHP** | `^8.3` | Lenguaje de servidor con tipado estricto |
+| **PostgreSQL** | `17` | Motor de base de datos relacional y gestión de secuencias |
+| **jwt-auth** | `^2.3` | Generación y validación de tokens de acceso |
+| **Pest** | `^4.7` | Framework de pruebas (Testing) |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 💻 Comandos de Desarrollo y Despliegue
 
-## Agentic Development
+Instrucciones para levantar el entorno localmente. Se asume que PostgreSQL está corriendo en el puerto `5434`.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| Comando | Acción |
+| :--- | :--- |
+| `composer install` | Instala las dependencias del core |
+| `cp .env.example .env` | Genera el archivo de variables de entorno |
+| `php artisan key:generate` | Genera la llave de encriptación de la aplicación |
+| `php artisan jwt:secret` | Firma la llave para la emisión de tokens JWT |
+| `php artisan migrate:fresh --seed` | Reconstruye la BD, reinicia secuencias en Postgres y siembra datos inmutables |
+| `php artisan serve` | Inicia el servidor de desarrollo local |
+| `php artisan test` | Ejecuta la suite de pruebas automatizadas con Pest |
 
-```bash
-composer require laravel/boost --dev
+---
 
-php artisan boost:install
-```
+## 📡 Documentación de la API (Endpoints)
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Todas las peticiones a rutas protegidas exigen el header: `Authorization: Bearer <token>`.
 
-## Contributing
+### Autenticación (`/api/auth`)
+| Método | Endpoint | Descripción | Acceso |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/login` | Autentica credenciales y devuelve el JWT | Público |
+| `GET`  | `/me`    | Devuelve la información del usuario en sesión | Protegido |
+| `POST` | `/logout`| Invalida el token actual en la lista negra | Protegido |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Gestión de Accesos (`/api/users` & `/api/roles`)
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `GET`  | `/roles` | Lista el catálogo de roles del sistema | `admin`, `auditor`, `operador` |
+| `GET`  | `/users` | Obtiene el directorio y estado lógico de usuarios | `admin`, `auditor`, `operador` |
+| `POST` | `/users` | Hashea credenciales y registra un nuevo usuario | `admin` |
+| `DELETE`| `/users/{id}` | Ejecuta una baja lógica (Soft Delete) | `admin` |
+| `POST` | `/users/{id}/restore` | Revierte la baja lógica de un usuario | `admin` |
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Bitácora y Tráfico (`/api/audit-logs` & `/api/demo`)
+| Método | Endpoint | Descripción | Roles Permitidos |
+| :--- | :--- | :--- | :--- |
+| `GET`  | `/audit-logs` | Retorna los 50 eventos de seguridad más recientes | `admin`, `auditor` |
+| `POST` | `/demo/simulate` | Inyecta tráfico cronológico simulando uso real | `admin` |
